@@ -7,7 +7,18 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-void isAvailable(const std::string&cmd){
+bool isBuiltin(const std::string &cmd){
+  std::vector<std::string> commands = {"type", "echo", "exit"};
+  for(auto command : commands){
+    if(command == cmd){
+      std::cout<<cmd<<": is a shell builtin"<<std::endl;
+      return true;
+    }
+  }
+  return false;
+}
+void type(const std::string&cmd){
+  if(isBuiltin(cmd)) return;
   if(cmd.empty()){
     std::cerr<< "type: missing arguments";
     return ;
@@ -59,14 +70,16 @@ int main() {
     std::cout<<input.substr(5)<<std::endl;
   }
   else if(input.substr(0,4) == "type"){
-    if(input.substr(5) == "echo" || input.substr(5) == "type" || input.substr(5) == "exit"){
-      std::cout<<input.substr(5)<<" is a shell builtin"<<std::endl;
-    }
-    else{
-      std::string cmd = input.substr(5);
-      isAvailable(cmd);
+    std::string cmd = input.substr(5);
+    type(cmd);
+    // if(input.substr(5) == "echo" || input.substr(5) == "type" || input.substr(5) == "exit"){
+    //   std::cout<<input.substr(5)<<" is a shell builtin"<<std::endl;
+    // }
+    // else{
+    //   std::string cmd = input.substr(5);
+    //   isAvailable(cmd);
 
-    }
+    // }
   }
   else{
     std::cout<< input <<": command not found"<< std::endl;
