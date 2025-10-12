@@ -1,54 +1,53 @@
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <vector>
+#include <unistd.h>     // for access(), X_OK
+#include <sys/stat.h>   // for stat()
+#include <cstdlib>      // for getenv()
 
 int main() {
-  // Flush after every std::cout / std:cerr
-  std::cout << std::unitbuf;
-  std::cerr << std::unitbuf;
+    std::cout << std::unitbuf;
+    std::cerr << std::unitbuf;
 
-  // Uncomment this block to pass the first stage
-  while(true){
-  std::cout << "$ ";
-  std::string input;
-  std::getline(std::cin, input);
-  if(input == "exit 0"){
-    return 0;
-  }
-  if(input.substr(0,4) == "echo"){
-    std::cout<<input.substr(5)<<std::endl;
-  }
-  else if(input.substr(0,4) == "type"){
-    if(input.substr(5) == "echo" || input.substr(5) == "type" || input.substr(5) == "exit"){
-      std::cout<<input.substr(5)<<" is a shell builtin"<<std::endl;
+    while (true) {
+        std::cout << "$ ";
+        std::string input;
+        std::getline(std::cin, input);
+
+        if (input == "exit 0") return 0;
+
+        // Handle "type <cmd>"
+        if (input.rfind("type ", 0) == 0) {
+            std::string cmd = input.substr(5);
+            const char* pathEnv = getenv("PATH");
+            if (!pathEnv) {
+                std::cerr << "PATH not set\n";
+                continue;
+            }
+
+            std::string pathStr(pathEnv);
+            std::stringstream ss(pathStr);
+            std::string dir;
+            bool found = false;
+
+            while (std::getline(ss, dir, ':')) {
+                std::string fullPath = dir + "/" + cmd;
+                struct stat sb;
+                if (stat(fullPath.c_str(), &sb) == 0) { // file exists
+                    if (access(fullPath.c_str(), X_OK) == 0) { // executable
+                        std::cout << fullPath << std::endl;
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!found) {
+                std::cout << cmd << ": not found" << std::endl;
+            }
+        } else {
+            std::cout << input << ": command not found" << std::endl;
+        }
     }
-    else{
-      std::cout<<input.substr(5)<<": not found"<<std::endl;
-    }
-  }
-  else{
-    std::cout<< input <<": command not found"<< std::endl;
-  }
-  // std::stringstream parsed(input);
-  // std::string word;
-  // bool f=0;
-  // while(parsed >> word){
-  //   if(f){
-  //     std::cout<<word<<" ";
-  //     continue;
-  //   }
-  //   if(word == "echo"){
-  //     f=1;
-  //     continue;
-  //   }
-  //   else{
-  //     break;
-  //   }
-  // }
-  // if(f){
-  //   std::cout<<std::endl;
-  // }
-  // else{
-  //   std::cout<< input <<": command not found"<< std::endl;
-  // }
-  }
 }
