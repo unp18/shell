@@ -8,12 +8,18 @@ int main() {
 
   // Uncomment this block to pass the first stage
   while(true){
+  std::cout << "$ ";
   std::string input;
-    std::cout << "$ ";
-    std::getline(std::cin, input);
-    if (input == "exit 0") return 0;
-    else if (input.find("echo") != std::string::npos) std::cout << input.substr(5) << "\n";
-    else std::cout << input << ": command not found\n";
+  std::getline(std::cin, input);
+  if(input == "exit 0"){
+    return 0;
+  }
+  if(input.substr(0,4) == "echo"){
+    std::cout<<input.substr(5)<<std::endl;
+  }
+  else{
+    std::cout<< input <<": command not found"<< std::endl;
+  }
   // std::stringstream parsed(input);
   // std::string word;
   // bool f=0;
