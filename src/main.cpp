@@ -1,53 +1,52 @@
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <unistd.h>     // for access(), X_OK
-#include <sys/stat.h>   // for stat()
-#include <cstdlib>      // for getenv()
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-int main() {
-    std::cout << std::unitbuf;
-    std::cerr << std::unitbuf;
-
-    while (true) {
-        std::cout << "$ ";
-        std::string input;
-        std::getline(std::cin, input);
-
-        if (input == "exit 0") return 0;
-
-        // Handle "type <cmd>"
-        if (input.rfind("type ", 0) == 0) {
-            std::string cmd = input.substr(5);
-            const char* pathEnv = getenv("PATH");
-            if (!pathEnv) {
-                std::cerr << "PATH not set\n";
-                continue;
-            }
-
-            std::string pathStr(pathEnv);
-            std::stringstream ss(pathStr);
-            std::string dir;
-            bool found = false;
-
-            while (std::getline(ss, dir, ':')) {
-                std::string fullPath = dir + "/" + cmd;
-                struct stat sb;
-                if (stat(fullPath.c_str(), &sb) == 0) { // file exists
-                    if (access(fullPath.c_str(), X_OK) == 0) { // executable
-                        std::cout << fullPath << std::endl;
-                        found = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!found) {
-                std::cout << cmd << ": not found" << std::endl;
-            }
-        } else {
-            std::cout << input << ": command not found" << std::endl;
-        }
+int is_builtin(const char *cmd) {
+    // Add your list of builtins here
+    const char *builtins[] = {"exit", "echo", "type"};
+    for (int i = 0; builtins[i]; i++) {
+        if (strcmp(cmd, builtins[i]) == 0)
+            return 1;
     }
+    return 0;
+}
+
+void type_command(const char *cmd) {
+    if (is_builtin(cmd)) {
+        printf("%s is a shell builtin\n", cmd);
+        return;
+    }
+
+    char *path_env = getenv("PATH");
+    if (!path_env) {
+        printf("%s: not found\n", cmd);
+        return;
+    }
+
+    // Duplicate PATH since strtok modifies it
+    char *path = strdup(path_env);
+    if (!path) {
+        perror("strdup");
+        return;
+    }
+
+    char *dir = strtok(path, ":");
+    while (dir) {
+        char full_path[1024];
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir, cmd);
+
+        // Check if file exists and is executable
+        if (access(full_path, X_OK) == 0) {
+            printf("%s is %s\n", cmd, full_path);
+            free(path);
+            return;
+        }
+
+        dir = strtok(NULL, ":");
+    }
+
+    printf("%s: not found\n", cmd);
+    free(path);
 }
