@@ -11,7 +11,7 @@ bool isBuiltin(const std::string &cmd){
   std::vector<std::string> commands = {"type", "echo", "exit"};
   for(auto command : commands){
     if(command == cmd){
-      std::cout<<cmd<<": is a shell builtin"<<std::endl;
+      std::cout<<cmd<<" is a shell builtin"<<std::endl;
       return true;
     }
   }
