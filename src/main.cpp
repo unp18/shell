@@ -161,7 +161,7 @@ int main() {
     if(newDirectory == "~"){
       chdir(getenv("HOME"));
     }
-    else(chdir(newDirectory.c_str()) != 0){
+    else if(chdir(newDirectory.c_str()) != 0){
       std::cout<<"cd: "<<input.substr(3)<<": No such file or directory"<<std::endl;
     }
   }
