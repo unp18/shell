@@ -154,7 +154,7 @@ int main() {
   }
   else if(input == "pwd"){
     std::filesystem::path currentPath = std::filesystem::current_path();
-    cout<<currentPath.string()<<endl;
+    std::cout<<currentPath.string()<<std::endl;
   }
   else{
     external(input);
