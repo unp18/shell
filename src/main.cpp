@@ -19,7 +19,7 @@ void splitString(const std::string& str, std::vector<std::string>& tokens) {
 }
 
 bool isBuiltin(const std::string &cmd){
-  std::vector<std::string> commands = {"type", "echo", "exit","pwd"};
+  std::vector<std::string> commands = {"type", "echo", "exit","pwd","cd"};
   for(auto command : commands){
     if(command == cmd){
       std::cout<<cmd<<" is a shell builtin"<<std::endl;
@@ -160,6 +160,9 @@ int main() {
     const char* newDirectory = input.substr(3).c_str();
     if(chdir(newDirectory) != 0){
       std::cout<<"cd: "<<input.substr(3)<<": No such file or directory"<<std::endl;
+    }
+    else{
+      chdir(newDirectory);
     }
   }
   else{
