@@ -157,7 +157,7 @@ int main() {
     std::cout<<currentPath.string()<<std::endl;
   }
   else if(input.substr(0,2) == "cd"){
-    const string newDirectory = input.substr(3);
+    const std::string newDirectory = input.substr(3);
     if(chdir(newDirectory.c_str()) != 0){
       std::cout<<"cd: "<<input.substr(3)<<": No such file or directory"<<std::endl;
     }
