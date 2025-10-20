@@ -158,8 +158,10 @@ int main() {
   }
   else if(input.substr(0,2) == "cd"){
     const std::string newDirectory = input.substr(3);
-    if(newDirectory == "~")newDirectory = (std::string)(getenv("HOME"));
-    if(chdir(newDirectory.c_str()) != 0){
+    if(newDirectory == "~"){
+      chdir(getenv("HOME"));
+    }
+    else(chdir(newDirectory.c_str()) != 0){
       std::cout<<"cd: "<<input.substr(3)<<": No such file or directory"<<std::endl;
     }
   }
