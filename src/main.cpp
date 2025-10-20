@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <filesystem>
+
 
 void splitString(const std::string& str, std::vector<std::string>& tokens) {
     std::istringstream iss(str);
@@ -17,7 +19,7 @@ void splitString(const std::string& str, std::vector<std::string>& tokens) {
 }
 
 bool isBuiltin(const std::string &cmd){
-  std::vector<std::string> commands = {"type", "echo", "exit"};
+  std::vector<std::string> commands = {"type", "echo", "exit","pwd"};
   for(auto command : commands){
     if(command == cmd){
       std::cout<<cmd<<" is a shell builtin"<<std::endl;
@@ -149,6 +151,10 @@ int main() {
   else if(input.substr(0,4) == "type"){
     std::string cmd = input.substr(5);
     type(cmd);
+  }
+  else if(input == "pwd"){
+    std::filesystem::path currentPath = std::filesystem::current_path();
+    cout<<currentPath.string()<<endl;
   }
   else{
     external(input);
