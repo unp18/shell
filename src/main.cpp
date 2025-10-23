@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <filesystem>
 
-std::vector<std::string> getArgs(std::string &input){
+std::vector<std::string> getArgs(const std::string &input){
   std::vector<std::string> args;
   std::string tmp;
   bool in_double_quote = false;
