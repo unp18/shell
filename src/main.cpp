@@ -42,7 +42,13 @@ std::vector<std::string> getArgs(const std::string &input){
                 args.push_back(tmp);
                 tmp.clear();
             }
-      } else {
+      } else if (c == '\\'){
+         if(i!=input.length()-1){
+          tmp+=input[i+1];
+          i++;
+         }
+      }
+        else {
             tmp += c;
         }
     }
