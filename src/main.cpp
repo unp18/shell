@@ -52,6 +52,11 @@ std::vector<std::string> getArgs(const std::string &input){
                 args.push_back(tmp);
                 tmp.clear();
             }
+            int temp = args.size()-1;
+            if(temp >=1){
+              int temp2 = args[temp].size()-1;
+              if(args[temp][temp2] != ' ') args[temp][temp2]+=' ';
+            }
       } else if (c == '\\'){
          if(i!=input.length()-1){
           tmp+=input[i+1];
@@ -208,7 +213,7 @@ int main() {
   std::vector<std::string> args = getArgs(input);
   if(args[0] == "echo"){
     for(int i=1; i<args.size();i++)
-    std::cout<<args[i]<<" ";
+    std::cout<<args[i]<<"";
     std::cout<<std::endl;
   }
   else if(args[0] == "type"){
