@@ -24,14 +24,14 @@ std::vector<std::string> getArgs(std::string &input){
                 tmp += input[++i]; // Add escaped char
         }
       } else if (c == '"' && !in_single_quote) {
-            if(i!=input.length()-1 && input[i+1] == c) continue;
+            if(i!=input.length()-1 && input[i+1] == c) {i++;continue;}
             in_double_quote = !in_double_quote;
             if (!in_double_quote && !tmp.empty()) { // End of a quoted arg
                 args.push_back(tmp);
                 tmp.clear();
             }
       } else if (c == '\'' && !in_double_quote) {
-            if(i!=input.length()-1 && input[i+1] == c) continue;
+            if(i!=input.length()-1 && input[i+1] == c) {i++;continue;}
             in_single_quote = !in_single_quote;
             if (!in_single_quote && !tmp.empty()) { // End of a quoted arg
                 args.push_back(tmp);
