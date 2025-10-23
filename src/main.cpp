@@ -28,7 +28,8 @@ std::vector<std::string> getArgs(const std::string &input){
             tmp += next;
             i++; // skip the next char
           } else {
-            tmp += '\\'; // keep the backslash
+            tmp += next;
+            i++; // keep the backslash
           }
       } else {
         tmp += '\\';
