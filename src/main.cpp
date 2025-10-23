@@ -55,7 +55,7 @@ std::vector<std::string> getArgs(const std::string &input){
             int temp = args.size()-1;
             if(temp >=1){
               int temp2 = args[temp].size()-1;
-              if(args[temp][temp2] != ' ') args[temp]+=' ';
+              if(args[temp] != " ") args.push_back(" ");
             }
       } else if (c == '\\'){
          if(i!=input.length()-1){
@@ -178,6 +178,7 @@ void type(const std::string&cmd){
         // Prepare arguments for execv (needs a char* array ending in NULL)
         std::vector<char*> argv;
         for (const auto& arg : args) {
+          if(arg == " ") continue;
             argv.push_back(const_cast<char*>(arg.c_str()));
         }
         argv.push_back(nullptr); // Null-terminate the array
