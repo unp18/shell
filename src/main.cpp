@@ -55,7 +55,7 @@ std::vector<std::string> getArgs(const std::string &input){
             int temp = args.size()-1;
             if(temp >=1){
               int temp2 = args[temp].size()-1;
-              if(args[temp][temp2] != ' ') args[temp][temp2]+=' ';
+              if(args[temp][temp2] != ' ') args[temp]+=' ';
             }
       } else if (c == '\\'){
          if(i!=input.length()-1){
