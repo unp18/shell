@@ -9,6 +9,47 @@
 #include <sys/wait.h>
 #include <filesystem>
 
+std::vector<std::string> getArgs(std::string &input){
+  std::vector<std::string> args;
+  std::string tmp;
+  bool in_double_quote = false;
+  bool in_single_quote = false;
+
+  for (size_t i = 0; i < input.length(); ++i) {
+        char c = input[i];
+
+      if (c == '\\' && (in_double_quote || in_single_quote)) { // Handle escape sequences
+        if (i + 1 < input.length()) {
+                tmp += input[++i]; // Add escaped char
+        }
+      } else if (c == '"' && !in_single_quote) {
+            in_double_quote = !in_double_quote;
+            if (!in_double_quote && !tmp.empty()) { // End of a quoted arg
+                args.push_back(tmp);
+                tmp.clear();
+            }
+      } else if (c == '\'' && !in_double_quote) {
+            in_single_quote = !in_single_quote;
+            if (!in_single_quote && !tmp.empty()) { // End of a quoted arg
+                args.push_back(tmp);
+                tmp.clear();
+            }
+      } else if (std::isspace(c) && !in_double_quote && !in_single_quote) {
+            if (!tmp.empty()) {
+                args.push_back(tmp);
+                tmp.clear();
+            }
+      } else {
+            tmp += c;
+        }
+    }
+
+    if (!tmp.empty()) { // Add last argument if it exists
+        args.push_back(tmp);
+    }
+
+    return args;
+}
 
 void splitString(const std::string& str, std::vector<std::string>& tokens) {
     std::istringstream iss(str);
@@ -145,18 +186,22 @@ int main() {
   if(input == "exit 0"){
     return 0;
   }
-  if(input.substr(0,4) == "echo"){
-    std::cout<<input.substr(5)<<std::endl;
+  std::vector<std::string> args = getArgs(input);
+  if(args[0] == "echo"){
+    for(int i=1; i<args.size();i++)
+    std::cout<<args[i];
+    std::cout<<std::endl;
   }
-  else if(input.substr(0,4) == "type"){
-    std::string cmd = input.substr(5);
-    type(cmd);
+  else if(args[0] == "type"){
+    for(int i=1; i<args.size();i++){
+    type(args[i]);
+    }
   }
-  else if(input == "pwd"){
+  else if(args[0] == "pwd"){
     std::filesystem::path currentPath = std::filesystem::current_path();
     std::cout<<currentPath.string()<<std::endl;
   }
-  else if(input.substr(0,2) == "cd"){
+  else if(args[0] == "cd"){
     const std::string newDirectory = input.substr(3);
     if(newDirectory == "~"){
       chdir(getenv("HOME"));
