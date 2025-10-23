@@ -196,12 +196,12 @@ int main() {
   }
   std::vector<std::string> args = getArgs(input);
   if(args[0] == "echo"){
-    for(int i=1; i<args.size();i++)
-    std::cout<<args[i]<<" ";
+    for(int i=2; i<args.size();i++)
+    std::cout<<args[i];
     std::cout<<std::endl;
   }
   else if(args[0] == "type"){
-    for(int i=1; i<args.size();i++){
+    for(int i=2; i<args.size();i++){
     type(args[i]);
     }
   }
