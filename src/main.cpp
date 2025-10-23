@@ -19,21 +19,20 @@ std::vector<std::string> getArgs(const std::string &input){
   for (size_t i = 0; i < input.length(); ++i) {
         char c = input[i];
 
-      if (c == '\\') {
+      if (c == '\\' && (in_double_quote || in_single_quote)) { // Handle escape sequences
+        
         if (i + 1 < input.length()) {
-          char next = input[i + 1];
+            char next = input[i + 1];
         // Only unescape quotes or another backslash
-          if ((in_double_quote && (next == '"' || next == '\\')) ||
+            if ((in_double_quote && (next == '"' || next == '\\')) ||
             (in_single_quote && (next == '\'' || next == '\\'))) {
             tmp += next;
             i++; // skip the next char
-          } else {
-            tmp += next;
-            i++; // keep the backslash
-          }
-      } else {
-        tmp += '\\';
-      }
+        } else {
+            tmp += '\\'; // keep the backslash
+        }
+          //      tmp += input[++i]; // Add escaped char
+        } else tmp+='\\';
       } else if (c == '"' && !in_single_quote) {
             if(i!=input.length()-1 && input[i+1] == c) {i++;continue;}
             in_double_quote = !in_double_quote;
@@ -53,9 +52,15 @@ std::vector<std::string> getArgs(const std::string &input){
                 args.push_back(tmp);
                 tmp.clear();
             }
-      } else {
-            tmp += c;
+      } else if (c == '\\'){
+         if(i!=input.length()-1){
+          tmp+=input[i+1];
+          i++;
+         }
       }
+        else {
+            tmp += c;
+        }
     }
 
     if (!tmp.empty()) { // Add last argument if it exists
