@@ -49,6 +49,7 @@ std::vector<std::string> getArgs(std::string &input){
             }
       } else {
             tmp += c;
+            is_space = false;
         }
     }
 
