@@ -110,8 +110,8 @@ void type(const std::string&cmd){
 
   void external(const std::string &input) {
     // 1. Parse the input string into command and arguments
-    std::vector<std::string> args;
-    splitString(input, args);
+    std::vector<std::string> args = getArgs(input);
+    // splitString(input, args);
     if (args.empty()) {
         return; // No command entered
     }
