@@ -26,7 +26,6 @@ std::vector<std::string> getArgs(std::string &input){
       } else if (c == '"' && !in_single_quote) {
             if(i!=input.length()-1 && input[i+1] == c) continue;
             in_double_quote = !in_double_quote;
-            //is_space = false;
             if (!in_double_quote && !tmp.empty()) { // End of a quoted arg
                 args.push_back(tmp);
                 tmp.clear();
@@ -34,22 +33,17 @@ std::vector<std::string> getArgs(std::string &input){
       } else if (c == '\'' && !in_double_quote) {
             if(i!=input.length()-1 && input[i+1] == c) continue;
             in_single_quote = !in_single_quote;
-            if(is_space)
-            args.push_back(" ");
-            //is_space = false;
             if (!in_single_quote && !tmp.empty()) { // End of a quoted arg
                 args.push_back(tmp);
                 tmp.clear();
             }
       } else if (std::isspace(c) && !in_double_quote && !in_single_quote) {
-            //is_space = true;
             if (!tmp.empty()) {
                 args.push_back(tmp);
                 tmp.clear();
             }
       } else {
             tmp += c;
-            //is_space = false;
         }
     }
 
