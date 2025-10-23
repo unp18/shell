@@ -24,32 +24,32 @@ std::vector<std::string> getArgs(std::string &input){
                 tmp += input[++i]; // Add escaped char
         }
       } else if (c == '"' && !in_single_quote) {
+            if(i!=input.length()-1 && input[i+1] == c) continue;
             in_double_quote = !in_double_quote;
-            if(is_space)
-            args.push_back(" ");
-            is_space = false;
+            //is_space = false;
             if (!in_double_quote && !tmp.empty()) { // End of a quoted arg
                 args.push_back(tmp);
                 tmp.clear();
             }
       } else if (c == '\'' && !in_double_quote) {
+            if(i!=input.length()-1 && input[i+1] == c) continue;
             in_single_quote = !in_single_quote;
             if(is_space)
             args.push_back(" ");
-            is_space = false;
+            //is_space = false;
             if (!in_single_quote && !tmp.empty()) { // End of a quoted arg
                 args.push_back(tmp);
                 tmp.clear();
             }
       } else if (std::isspace(c) && !in_double_quote && !in_single_quote) {
-            is_space = true;
+            //is_space = true;
             if (!tmp.empty()) {
                 args.push_back(tmp);
                 tmp.clear();
             }
       } else {
             tmp += c;
-            is_space = false;
+            //is_space = false;
         }
     }
 
@@ -198,7 +198,7 @@ int main() {
   std::vector<std::string> args = getArgs(input);
   if(args[0] == "echo"){
     for(int i=2; i<args.size();i++)
-    std::cout<<args[i];
+    std::cout<<args[i]<<" ";
     std::cout<<std::endl;
   }
   else if(args[0] == "type"){
