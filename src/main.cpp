@@ -12,7 +12,8 @@
 #include <fcntl.h>
 
 bool reOut = false;
-std::string loc;
+bool reError = false;
+std::string loc,locE;
 std::vector<std::string> getArgs(const std::string &input){
   std::vector<std::string> args;
   std::string tmp;
@@ -78,14 +79,6 @@ std::vector<std::string> getArgs(const std::string &input){
 
     return args;
 }
-
-// void splitString(const std::string& str, std::vector<std::string>& tokens) {
-//     std::istringstream iss(str);
-//     std::string token;
-//     while (iss >> token) {
-//         tokens.push_back(token);
-//     }
-// }
 
 bool isBuiltin(const std::string &cmd){
   std::vector<std::string> commands = {"type", "echo", "exit","pwd","cd"};
@@ -190,6 +183,16 @@ void type(const std::string&cmd){
             dup2(fd, STDOUT_FILENO);
             close(fd);
         }
+        if (!locE.empty()) {
+            int flags = O_WRONLY | O_CREAT | (O_TRUNC);
+            int fd = open(locE.c_str(), flags, 0644);
+            if (fd < 0) {
+                perror(locE.c_str());
+                exit(1);
+            }
+            dup2(fd, STDERR_FILENO);
+            close(fd);
+        }
         std::vector<char*> argv;
         for (const auto& arg : args) {
           if(arg == " ") continue;
@@ -228,6 +231,8 @@ int main() {
   std::vector<std::string> args = getArgs(input);
   loc="";
   reOut = false;
+  reError = false;
+  locE = "";
   for(int i=0; i<args.size(); i++){
     if(args[i] == ">" || args[i] == "1>"){
       if(i!= args.size()-2){
@@ -236,12 +241,24 @@ int main() {
         reOut = true;
       }
     }
+    if(args[i] == "2>"){
+      if(i!= args.size()-2){
+        locE = args[i+2];
+        args.erase(args.begin()+i, args.begin()+i+3);
+        reError = true;
+      }
+    }
   }
   std::streambuf* original_cout = std::cout.rdbuf();
-        std::ofstream file;
+  std::streambuf* original_cerr = std::cerr.rdbuf();
+        std::ofstream file,fileError;
         if (!loc.empty()) {
             file.open(loc, std::ios::out);
             std::cout.rdbuf(file.rdbuf());
+        }
+        if(!locE.empty()){
+          fileError.open(locE,std::ios::out);
+          std::cerr.rdbuf(fileError.rdbuf());
         }
 
   if(args[0] == "echo"){
@@ -274,6 +291,10 @@ int main() {
             std::cout.rdbuf(original_cout);
             file.close();
         }
+  if(!locE.empty()){
+    std::cerr.rdbuf(original_cerr);
+    fileError.close();
+  }
   //loc = "";
   }
 
