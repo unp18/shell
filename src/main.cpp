@@ -133,9 +133,9 @@ void type(const std::string&cmd){
 
 }
 
-  void external(const std::string &input) {
+  void external(const std::vector<std::string> &args) {
     // 1. Parse the input string into command and arguments
-    std::vector<std::string> args = getArgs(input);
+    //std::vector<std::string> args = getArgs(input);
     // splitString(input, args);
     if (args.empty()) {
         return; // No command entered
@@ -230,9 +230,9 @@ int main() {
   reOut = false;
   for(int i=0; i<args.size(); i++){
     if(args[i] == ">" || args[i] == "1>"){
-      if(i!= args.size()-1){
-        loc = args[i+1];
-        args.erase(args.begin()+i, args.begin()+i+2);
+      if(i!= args.size()-2){
+        loc = args[i+2];
+        args.erase(args.begin()+i, args.begin()+i+3);
         reOut = true;
       }
     }
@@ -240,7 +240,7 @@ int main() {
   std::streambuf* original_cout = std::cout.rdbuf();
         std::ofstream file;
         if (!loc.empty()) {
-            file.open(loc, std::ios::trunc);
+            file.open(loc, std::ios::out);
             std::cout.rdbuf(file.rdbuf());
         }
 
@@ -268,13 +268,13 @@ int main() {
     }
   }
   else{
-    external(input);
+    external(args);
   }
   if (!loc.empty()) {
             std::cout.rdbuf(original_cout);
             file.close();
         }
-  loc = "";
+  //loc = "";
   }
 
 }
