@@ -179,7 +179,7 @@ int main() {
         bool append = false;
 
         for (size_t i = 0; i < args.size(); ++i) {
-            if (args[i] == ">") {
+            if (args[i] == ">" || args[i] == "1>") {
                 if (i + 1 < args.size()) outFile = args[i + 1];
                 args.erase(args.begin() + i, args.begin() + i + 2);
                 break;
