@@ -13,6 +13,8 @@
 
 bool reOut = false;
 bool reError = false;
+bool appOut = false;
+bool appError = false;
 std::string loc,locE;
 std::vector<std::string> getArgs(const std::string &input){
   std::vector<std::string> args;
@@ -174,7 +176,7 @@ void type(const std::string&cmd){
         // --- Child Process ---
         // Prepare arguments for execv (needs a char* array ending in NULL)
         if (!loc.empty()) {
-            int flags = O_WRONLY | O_CREAT | (O_TRUNC);
+            int flags = O_WRONLY | O_CREAT | (appOut ? O_APPEND : O_TRUNC);
             int fd = open(loc.c_str(), flags, 0644);
             if (fd < 0) {
                 perror(loc.c_str());
@@ -184,7 +186,7 @@ void type(const std::string&cmd){
             close(fd);
         }
         if (!locE.empty()) {
-            int flags = O_WRONLY | O_CREAT | (O_TRUNC);
+            int flags = O_WRONLY | O_CREAT | (appError ? O_APPEND :O_TRUNC);
             int fd = open(locE.c_str(), flags, 0644);
             if (fd < 0) {
                 perror(locE.c_str());
@@ -232,6 +234,8 @@ int main() {
   loc="";
   reOut = false;
   reError = false;
+  appError = false;
+  appOut = false;
   locE = "";
   for(int i=0; i<args.size(); i++){
     if(args[i] == ">" || args[i] == "1>"){
@@ -241,6 +245,14 @@ int main() {
         reOut = true;
       }
     }
+    if(args[i] == ">>" || args[i] == "1>>"){
+      if(i!= args.size()-2){
+        loc = args[i+2];
+        args.erase(args.begin()+i, args.begin()+i+3);
+        reOut = true;
+        appOut = true;
+      }
+    }
     if(args[i] == "2>"){
       if(i!= args.size()-2){
         locE = args[i+2];
@@ -248,16 +260,24 @@ int main() {
         reError = true;
       }
     }
+    if(args[i] == "2>>"){
+      if(i!= args.size()-2){
+        locE = args[i+2];
+        args.erase(args.begin()+i, args.begin()+i+3);
+        reError = true;
+        appError = true;
+      }
+    }
   }
   std::streambuf* original_cout = std::cout.rdbuf();
   std::streambuf* original_cerr = std::cerr.rdbuf();
         std::ofstream file,fileError;
         if (!loc.empty()) {
-            file.open(loc, std::ios::out);
+            file.open(loc, appOut ? std::ios::app : std::ios::out);
             std::cout.rdbuf(file.rdbuf());
         }
         if(!locE.empty()){
-          fileError.open(locE,std::ios::out);
+          fileError.open(locE,appError ? std::ios::app : std::ios::out);
           std::cerr.rdbuf(fileError.rdbuf());
         }
 
