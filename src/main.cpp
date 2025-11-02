@@ -135,7 +135,7 @@ bool isBuiltin(const std::string &cmd)
 void type(const std::string &cmd)
 {
     if (isBuiltin(cmd))
-        std::cout << cmd << " is a shell builtin" << std::endl;
+        std::cout << cmd << " is a shell builtin";
         return;
     if (cmd.empty())
     {
@@ -145,7 +145,7 @@ void type(const std::string &cmd)
     const char *pathEnv = std::getenv("PATH");
     if (!pathEnv)
     {
-        std::cout << cmd << ": not found" << std::endl;
+        std::cout << cmd << ": not found" ;
         return;
     }
 
@@ -177,12 +177,9 @@ void type(const std::string &cmd)
 void run_builtin(std::vector<std::string> args){
     if (args[0] == "echo")
         {
-            for (int i = 1; i < args.size(); i++) {
-        std::cout << args[i];
-        if (i != args.size() - 1)
-            std::cout << " ";
-    }
-    std::cout << std::endl;
+            for (int i = 1; i < args.size(); i++)
+                std::cout << args[i];
+            
         }
         else if (args[0] == "type")
         {
@@ -194,7 +191,7 @@ void run_builtin(std::vector<std::string> args){
         else if (args[0] == "pwd")
         {
             std::filesystem::path currentPath = std::filesystem::current_path();
-            std::cout << currentPath.string() << std::endl;
+            std::cout << currentPath.string();
         }
         else if (args[0] == "cd")
         {
@@ -207,7 +204,7 @@ void run_builtin(std::vector<std::string> args){
             }
             else if (chdir(newDirectory.c_str()) != 0)
             {
-                std::cout << "cd: " << input.substr(3) << ": No such file or directory" << std::endl;
+                std::cout << "cd: " << input.substr(3) << ": No such file or directory";
             }
         }
 }
@@ -536,7 +533,9 @@ int main(int argc, char **argv)
             std::cerr.rdbuf(fileError.rdbuf());
         }
 
-        if(isBuiltin(args[0]) && !isPiped) run_builtin(args);
+        if(isBuiltin(args[0]) && !isPiped) {
+            run_builtin(args);
+            std::cout << std::endl;}
         else
         {
             // check for pipe(s)
