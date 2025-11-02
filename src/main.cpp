@@ -17,7 +17,7 @@ bool reOut = false;
 bool reError = false;
 bool appOut = false;
 bool appError = false;
-bool isPiped =false;
+bool isPiped = false;
 std::string loc, locE;
 std::vector<std::string> vocabulary{"type", "echo", "exit", "pwd", "cd"};
 std::vector<std::string> getArgs(const std::string &input)
@@ -126,7 +126,7 @@ bool isBuiltin(const std::string &cmd)
     {
         if (command == cmd)
         {
-            
+
             return true;
         }
     }
@@ -135,8 +135,10 @@ bool isBuiltin(const std::string &cmd)
 void type(const std::string &cmd)
 {
     if (isBuiltin(cmd))
-        {std::cout << cmd << " is a shell builtin" << std::endl;
-        return;}
+    {
+        std::cout << cmd << " is a shell builtin" << std::endl;
+        return;
+    }
     if (cmd.empty())
     {
         std::cerr << "type: missing arguments";
@@ -174,42 +176,44 @@ void type(const std::string &cmd)
         std::cout << cmd << ": not found" << std::endl;
     }
 }
-void run_builtin(std::vector<std::string> args){
+void run_builtin(std::vector<std::string> args)
+{
     if (args[0] == "echo")
+    {
+        for (int i = 1; i < args.size() && args[i] != " "; i++)
         {
-            for (int i = 1; i < args.size() && args[i] != " "; i++)
-                {std::cout << args[i];
-                //printf("%s",args[i]);
-                }
-            std::cout<<"\n";
-            
+            std::cout << args[i];
+            // printf("%s",args[i]);
         }
-        else if (args[0] == "type")
+        std::cout << "\n";
+    }
+    else if (args[0] == "type")
+    {
+        for (int i = 1; i < args.size(); i++)
         {
-            for (int i = 1; i < args.size(); i++)
-            {
-                type(args[i]);
-            }
+            type(args[i]);
         }
-        else if (args[0] == "pwd")
+    }
+    else if (args[0] == "pwd")
+    {
+        std::filesystem::path currentPath = std::filesystem::current_path();
+        std::cout << currentPath.string() << std::endl;
+    }
+    else if (args[0] == "cd")
+    {
+        std::string input;
+        for (auto x : args)
+            input += x;
+        const std::string newDirectory = input.substr(3);
+        if (newDirectory == "~")
         {
-            std::filesystem::path currentPath = std::filesystem::current_path();
-            std::cout << currentPath.string() << std::endl;
+            chdir(getenv("HOME"));
         }
-        else if (args[0] == "cd")
+        else if (chdir(newDirectory.c_str()) != 0)
         {
-            std::string input;
-            for(auto x:args) input+=x;
-            const std::string newDirectory = input.substr(3);
-            if (newDirectory == "~")
-            {
-                chdir(getenv("HOME"));
-            }
-            else if (chdir(newDirectory.c_str()) != 0)
-            {
-                std::cout << "cd: " << input.substr(3) << ": No such file or directory" << std::endl;
-            }
+            std::cout << "cd: " << input.substr(3) << ": No such file or directory" << std::endl;
         }
+    }
 }
 void external(const std::vector<std::string> &args)
 {
@@ -350,14 +354,16 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
                 argv.push_back(const_cast<char *>(arg.c_str()));
             }
             argv.push_back(nullptr);
-            if(isBuiltin(argv[0])){
+            if (isBuiltin(argv[0]))
+            {
                 run_builtin(pipelines[i]);
                 exit(0);
             }
-            else{
-            execvp(argv[0], argv.data());
-            perror("execvp");
-            exit(1);
+            else
+            {
+                execvp(argv[0], argv.data());
+                perror("execvp");
+                exit(1);
             }
         }
 
@@ -483,8 +489,9 @@ int main(int argc, char **argv)
         locE = "";
         isPiped = false;
         for (int i = 0; i < args.size(); i++)
-        {   
-            if(args[i] == "|") isPiped = true;
+        {
+            if (args[i] == "|")
+                isPiped = true;
             if (args[i] == ">" || args[i] == "1>")
             {
                 if (i != args.size() - 2)
@@ -538,9 +545,10 @@ int main(int argc, char **argv)
             std::cerr.rdbuf(fileError.rdbuf());
         }
 
-        if(isBuiltin(args[0]) && !isPiped) {
+        if (isBuiltin(args[0]) && !isPiped)
+        {
             run_builtin(args);
-            }
+        }
         else
         {
             // check for pipe(s)
