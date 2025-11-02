@@ -17,6 +17,7 @@ bool reOut = false;
 bool reError = false;
 bool appOut = false;
 bool appError = false;
+bool isPiped =false;
 std::string loc, locE;
 std::vector<std::string> vocabulary{"type", "echo", "exit", "pwd", "cd"};
 std::vector<std::string> getArgs(const std::string &input)
@@ -438,8 +439,10 @@ int main(int argc, char **argv)
         appError = false;
         appOut = false;
         locE = "";
+        isPiped = false;
         for (int i = 0; i < args.size(); i++)
-        {
+        {   
+            if(args[i] == "|") isPiped = true;
             if (args[i] == ">" || args[i] == "1>")
             {
                 if (i != args.size() - 2)
@@ -493,25 +496,25 @@ int main(int argc, char **argv)
             std::cerr.rdbuf(fileError.rdbuf());
         }
 
-        if (args[0] == "echo")
+        if (args[0] == "echo" && !isPiped)
         {
             for (int i = 1; i < args.size(); i++)
                 std::cout << args[i] << "";
             std::cout << std::endl;
         }
-        else if (args[0] == "type")
+        else if (args[0] == "type" && !isPiped)
         {
             for (int i = 1; i < args.size(); i++)
             {
                 type(args[i]);
             }
         }
-        else if (args[0] == "pwd")
+        else if (args[0] == "pwd" && !isPiped)
         {
             std::filesystem::path currentPath = std::filesystem::current_path();
             std::cout << currentPath.string() << std::endl;
         }
-        else if (args[0] == "cd")
+        else if (args[0] == "cd" && !isPiped)
         {
             const std::string newDirectory = input.substr(3);
             if (newDirectory == "~")
@@ -552,6 +555,7 @@ int main(int argc, char **argv)
                 external(args);
             }
         }
+        isPiped = false;
         if (!loc.empty())
         {
             std::cout.rdbuf(original_cout);
