@@ -178,7 +178,8 @@ void run_builtin(std::vector<std::string> args){
     if (args[0] == "echo")
         {
             for (int i = 1; i < args.size(); i++)
-                std::cout << args[i];
+                {std::cout << args[i];
+                printf("%s",args[i]);}
             std::cout<<"\n";
             
         }
