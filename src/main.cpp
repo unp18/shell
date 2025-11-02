@@ -179,7 +179,7 @@ void run_builtin(std::vector<std::string> args){
         {
             for (int i = 1; i < args.size(); i++)
                 std::cout << args[i];
-            //std::cout<<"\n";
+            std::cout<<"\n";
             
         }
         else if (args[0] == "type")
@@ -352,9 +352,11 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
                 run_builtin(pipelines[i]);
                 exit(0);
             }
+            else{
             execvp(argv[0], argv.data());
             perror("execvp");
             exit(1);
+            }
         }
 
         // --- PARENT ---
