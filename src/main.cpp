@@ -177,7 +177,7 @@ void type(const std::string &cmd)
 void run_builtin(std::vector<std::string> args){
     if (args[0] == "echo")
         {
-            for (int i = 1; i < args.size(); i++)
+            for (int i = 1; i < args.size() && args[i] != " "; i++)
                 {std::cout << args[i];
                 //printf("%s",args[i]);
                 }
