@@ -276,7 +276,45 @@ void external(const std::vector<std::string> &args)
         waitpid(pid, &status, 0);
     }
 }
+void executePipeline(std::vector<std::vector<std::string>> &pipelines)
+{
+    int numCmds = pipelines.size();
+    int pipefd[2], in_fd = 0;
 
+    for (int i = 0; i < numCmds; i++)
+    {
+        pipe(pipefd); // create pipe
+
+        pid_t pid = fork();
+        if (pid == 0) // child
+        {
+            dup2(in_fd, STDIN_FILENO);  // read input from previous command
+            if (i != numCmds - 1)
+                dup2(pipefd[1], STDOUT_FILENO); // write to next command
+
+            close(pipefd[0]);
+            close(pipefd[1]);
+
+            // Convert vector<string> to char*[]
+            std::vector<char *> argv;
+            for (auto &arg : pipelines[i])
+            {
+                if (arg == " ") continue;
+                argv.push_back(const_cast<char *>(arg.c_str()));
+            }
+            argv.push_back(nullptr);
+
+            execvp(argv[0], argv.data());
+            perror("execvp");
+            exit(1);
+        }
+
+        // Parent
+        wait(NULL);
+        close(pipefd[1]);
+        in_fd = pipefd[0]; // next command reads from previous output
+    }
+}
 char *command_generator(const char *text, int state)
 {
     static std::vector<std::string> matches;
@@ -376,7 +414,7 @@ int main(int argc, char **argv)
         {
             return 0;
         }
-        std::vector<std::string> args = getArgs(input);
+        std::vector<std::string> args = getArgs(input),args2;
         loc = "";
         reOut = false;
         reError = false;
@@ -384,7 +422,7 @@ int main(int argc, char **argv)
         appOut = false;
         locE = "";
         for (int i = 0; i < args.size(); i++)
-        {
+        {   
             if (args[i] == ">" || args[i] == "1>")
             {
                 if (i != args.size() - 2)
@@ -470,7 +508,31 @@ int main(int argc, char **argv)
         }
         else
         {
-            external(args);
+            std::vector<std::vector<std::string>> piped;
+    std::vector<std::string> current;
+
+    for (auto &arg : args)
+    {
+        if (arg == "|")
+        {
+            piped.push_back(current);
+            current.clear();
+        }
+        else
+        {
+            current.push_back(arg);
+        }
+    }
+    piped.push_back(current);
+
+    if (piped.size() > 1)
+    {
+        executePipeline(piped);
+    }
+    else
+    {
+        external(args);
+    }
         }
         if (!loc.empty())
         {
