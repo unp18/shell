@@ -179,7 +179,8 @@ void run_builtin(std::vector<std::string> args){
         {
             for (int i = 1; i < args.size(); i++)
                 {std::cout << args[i];
-                printf("%s",args[i]);}
+                //printf("%s",args[i]);
+                }
             std::cout<<"\n";
             
         }
