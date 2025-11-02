@@ -126,7 +126,7 @@ bool isBuiltin(const std::string &cmd)
     {
         if (command == cmd)
         {
-            std::cout << cmd << " is a shell builtin" << std::endl;
+            
             return true;
         }
     }
@@ -135,6 +135,7 @@ bool isBuiltin(const std::string &cmd)
 void type(const std::string &cmd)
 {
     if (isBuiltin(cmd))
+        std::cout << cmd << " is a shell builtin" << std::endl;
         return;
     if (cmd.empty())
     {
