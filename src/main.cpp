@@ -135,8 +135,8 @@ bool isBuiltin(const std::string &cmd)
 void type(const std::string &cmd)
 {
     if (isBuiltin(cmd))
-        std::cout << cmd << " is a shell builtin" << std::endl;
-        return;
+        {std::cout << cmd << " is a shell builtin" << std::endl;
+        return;}
     if (cmd.empty())
     {
         std::cerr << "type: missing arguments";
