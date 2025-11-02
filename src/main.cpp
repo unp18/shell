@@ -179,7 +179,7 @@ void run_builtin(std::vector<std::string> args){
         {
             for (int i = 1; i < args.size(); i++)
                 std::cout << args[i];
-            std::cout<<"\n";
+            //std::cout<<"\n";
             
         }
         else if (args[0] == "type")
