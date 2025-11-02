@@ -279,27 +279,36 @@ void external(const std::vector<std::string> &args)
 void executePipeline(std::vector<std::vector<std::string>> &pipelines)
 {
     int numCmds = pipelines.size();
-    int pipefd[2], in_fd = 0;
+    int pipefd[2];
+    int in_fd = 0;
+    std::vector<pid_t> pids;
 
     for (int i = 0; i < numCmds; i++)
     {
-        pipe(pipefd); // create pipe
+        if (i < numCmds - 1)
+            pipe(pipefd);
 
         pid_t pid = fork();
-        if (pid == 0) // child
+        if (pid == 0) // --- CHILD ---
         {
-            dup2(in_fd, STDIN_FILENO);  // read input from previous command
-            if (i != numCmds - 1)
-                dup2(pipefd[1], STDOUT_FILENO); // write to next command
+            dup2(in_fd, STDIN_FILENO);
 
-            close(pipefd[0]);
-            close(pipefd[1]);
+            if (i < numCmds - 1)
+                dup2(pipefd[1], STDOUT_FILENO);
 
-            // Convert vector<string> to char*[]
+            // Close pipe ends not used by this child
+            if (i < numCmds - 1)
+            {
+                close(pipefd[0]);
+                close(pipefd[1]);
+            }
+
+            // Convert vector<string> → char*[]
             std::vector<char *> argv;
             for (auto &arg : pipelines[i])
             {
-                if (arg == " ") continue;
+                if (arg == " ")
+                    continue;
                 argv.push_back(const_cast<char *>(arg.c_str()));
             }
             argv.push_back(nullptr);
@@ -309,11 +318,19 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
             exit(1);
         }
 
-        // Parent
-        wait(NULL);
-        close(pipefd[1]);
-        in_fd = pipefd[0]; // next command reads from previous output
+        // --- PARENT ---
+        pids.push_back(pid);
+
+        if (i < numCmds - 1)
+        {
+            close(pipefd[1]);  // parent doesn't write
+            in_fd = pipefd[0]; // next child reads from here
+        }
     }
+
+    // ✅ Wait only AFTER all processes are forked
+    for (pid_t pid : pids)
+        waitpid(pid, nullptr, 0);
 }
 char *command_generator(const char *text, int state)
 {
@@ -414,7 +431,7 @@ int main(int argc, char **argv)
         {
             return 0;
         }
-        std::vector<std::string> args = getArgs(input),args2;
+        std::vector<std::string> args = getArgs(input), args2;
         loc = "";
         reOut = false;
         reError = false;
@@ -422,7 +439,7 @@ int main(int argc, char **argv)
         appOut = false;
         locE = "";
         for (int i = 0; i < args.size(); i++)
-        {   
+        {
             if (args[i] == ">" || args[i] == "1>")
             {
                 if (i != args.size() - 2)
@@ -507,34 +524,34 @@ int main(int argc, char **argv)
             }
         }
         else
-{
-    // check for pipe(s)
-    std::vector<std::vector<std::string>> piped;
-    std::vector<std::string> current;
-
-    for (auto &arg : args)
-    {
-        if (arg == "|")
         {
+            // check for pipe(s)
+            std::vector<std::vector<std::string>> piped;
+            std::vector<std::string> current;
+
+            for (auto &arg : args)
+            {
+                if (arg == "|")
+                {
+                    piped.push_back(current);
+                    current.clear();
+                }
+                else
+                {
+                    current.push_back(arg);
+                }
+            }
             piped.push_back(current);
-            current.clear();
-        }
-        else
-        {
-            current.push_back(arg);
-        }
-    }
-    piped.push_back(current);
 
-    if (piped.size() > 1)
-    {
-        executePipeline(piped);
-    }
-    else
-    {
-        external(args);
-    }
-}
+            if (piped.size() > 1)
+            {
+                executePipeline(piped);
+            }
+            else
+            {
+                external(args);
+            }
+        }
         if (!loc.empty())
         {
             std::cout.rdbuf(original_cout);
