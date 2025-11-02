@@ -507,8 +507,9 @@ int main(int argc, char **argv)
             }
         }
         else
-        {
-            std::vector<std::vector<std::string>> piped;
+{
+    // check for pipe(s)
+    std::vector<std::vector<std::string>> piped;
     std::vector<std::string> current;
 
     for (auto &arg : args)
@@ -533,7 +534,7 @@ int main(int argc, char **argv)
     {
         external(args);
     }
-        }
+}
         if (!loc.empty())
         {
             std::cout.rdbuf(original_cout);
