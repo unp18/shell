@@ -173,7 +173,40 @@ void type(const std::string &cmd)
         std::cout << cmd << ": not found" << std::endl;
     }
 }
-
+void run_builtin(std::vector<std::string> args){
+    if (args[0] == "echo")
+        {
+            for (int i = 1; i < args.size(); i++)
+                std::cout << args[i] << "";
+            std::cout << std::endl;
+        }
+        else if (args[0] == "type")
+        {
+            for (int i = 1; i < args.size(); i++)
+            {
+                type(args[i]);
+            }
+        }
+        else if (args[0] == "pwd")
+        {
+            std::filesystem::path currentPath = std::filesystem::current_path();
+            std::cout << currentPath.string() << std::endl;
+        }
+        else if (args[0] == "cd")
+        {
+            std::string input;
+            for(auto x:args) input+=x;
+            const std::string newDirectory = input.substr(3);
+            if (newDirectory == "~")
+            {
+                chdir(getenv("HOME"));
+            }
+            else if (chdir(newDirectory.c_str()) != 0)
+            {
+                std::cout << "cd: " << input.substr(3) << ": No such file or directory" << std::endl;
+            }
+        }
+}
 void external(const std::vector<std::string> &args)
 {
     // 1. Parse the input string into command and arguments
@@ -313,7 +346,10 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
                 argv.push_back(const_cast<char *>(arg.c_str()));
             }
             argv.push_back(nullptr);
-
+            if(isBuiltin(argv[0])){
+                run_builtin(pipelines[i]);
+                exit(0);
+            }
             execvp(argv[0], argv.data());
             perror("execvp");
             exit(1);
@@ -432,7 +468,7 @@ int main(int argc, char **argv)
         {
             return 0;
         }
-        std::vector<std::string> args = getArgs(input), args2;
+        std::vector<std::string> args = getArgs(input);
         loc = "";
         reOut = false;
         reError = false;
@@ -496,36 +532,7 @@ int main(int argc, char **argv)
             std::cerr.rdbuf(fileError.rdbuf());
         }
 
-        if (args[0] == "echo" && !isPiped)
-        {
-            for (int i = 1; i < args.size(); i++)
-                std::cout << args[i] << "";
-            std::cout << std::endl;
-        }
-        else if (args[0] == "type" && !isPiped)
-        {
-            for (int i = 1; i < args.size(); i++)
-            {
-                type(args[i]);
-            }
-        }
-        else if (args[0] == "pwd" && !isPiped)
-        {
-            std::filesystem::path currentPath = std::filesystem::current_path();
-            std::cout << currentPath.string() << std::endl;
-        }
-        else if (args[0] == "cd" && !isPiped)
-        {
-            const std::string newDirectory = input.substr(3);
-            if (newDirectory == "~")
-            {
-                chdir(getenv("HOME"));
-            }
-            else if (chdir(newDirectory.c_str()) != 0)
-            {
-                std::cout << "cd: " << input.substr(3) << ": No such file or directory" << std::endl;
-            }
-        }
+        if(isBuiltin(args[0])) run_builtin(args);
         else
         {
             // check for pipe(s)
