@@ -533,7 +533,7 @@ int main(int argc, char **argv)
             std::cerr.rdbuf(fileError.rdbuf());
         }
 
-        if(isBuiltin(args[0])) run_builtin(args);
+        if(isBuiltin(args[0]) && !isPiped) run_builtin(args);
         else
         {
             // check for pipe(s)
