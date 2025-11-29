@@ -231,6 +231,7 @@ void run_builtin(std::vector<std::string> args)
             }
             else if(args[1] == "-w"){
                 write_history(args[3].c_str());
+                return;
             }
             else
             {
