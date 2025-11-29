@@ -356,6 +356,9 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
             argv.push_back(nullptr);
             if (isBuiltin(argv[0]))
             {
+                std::cout.flush();
+                std::cerr.flush();
+                std::ios::sync_with_stdio(false);
                 run_builtin(pipelines[i]);
                 exit(0);
             }
