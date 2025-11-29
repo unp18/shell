@@ -322,7 +322,7 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
 {
     int numCmds = pipelines.size();
     int pipefd[2];
-    int in_fd = 0; // This will be STDIN_FILENO for the first command
+    int in_fd = 0;
     std::vector<pid_t> pids;
 
     for (int i = 0; i < numCmds; i++)
@@ -333,23 +333,19 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
         pid_t pid = fork();
         if (pid == 0) // --- CHILD ---
         {
-            // 1. Set up input redirection
-            if (in_fd != STDIN_FILENO)
-            {
-                dup2(in_fd, STDIN_FILENO);
-                close(in_fd); // ✅ Close the old FD
-            }
+            dup2(in_fd, STDIN_FILENO);
 
-            // 2. Set up output redirection
+            if (i < numCmds - 1)
+                dup2(pipefd[1], STDOUT_FILENO);
+
+            // Close pipe ends not used by this child
             if (i < numCmds - 1)
             {
-                dup2(pipefd[1], STDOUT_FILENO);
-                // Close *both* pipe ends in the child, it doesn't need them
-                close(pipefd[0]); 
+                close(pipefd[0]);
                 close(pipefd[1]);
             }
 
-            // ... (your argv setup code) ...
+            // Convert vector<string> → char*[]
             std::vector<char *> argv;
             for (auto &arg : pipelines[i])
             {
@@ -358,34 +354,30 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
                 argv.push_back(const_cast<char *>(arg.c_str()));
             }
             argv.push_back(nullptr);
-            
-            if(isBuiltin(argv[0])){
+            if (isBuiltin(argv[0]))
+            {
                 run_builtin(pipelines[i]);
                 exit(0);
             }
-            execvp(argv[0], argv.data());
-            perror("execvp");
-            exit(1);
+            else
+            {
+                execvp(argv[0], argv.data());
+                perror("execvp");
+                exit(1);
+            }
         }
 
         // --- PARENT ---
         pids.push_back(pid);
 
-        // 3. Close the parent's copy of the *previous* pipe's read end
-        if (in_fd != STDIN_FILENO)
-        {
-            close(in_fd); // ✅ Close the parent's read end
-        }
-
-        // 4. Set up 'in_fd' for the *next* loop iteration
         if (i < numCmds - 1)
         {
-            close(pipefd[1]);  // Parent doesn't write
-            in_fd = pipefd[0]; // Save the read end for the next child
+            close(pipefd[1]);  // parent doesn't write
+            in_fd = pipefd[0]; // next child reads from here
         }
     }
 
-    // 5. Wait for all children to finish
+    // ✅ Wait only AFTER all processes are forked
     for (pid_t pid : pids)
         waitpid(pid, nullptr, 0);
 }
