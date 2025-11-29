@@ -18,6 +18,7 @@ bool reError = false;
 bool appOut = false;
 bool appError = false;
 bool isPiped = false;
+std::string histFile = "";
 std::string loc, locE;
 std::vector<std::string> vocabulary{"type", "echo", "exit", "pwd", "cd", "history"};
 std::vector<std::string> getArgs(const std::string &input)
@@ -217,11 +218,27 @@ void run_builtin(std::vector<std::string> args)
     else if (args[0] == "history")
     {
         int start = 0;
-        if(args.size() > 1) start = history_length - stoi(args[1]);
+        
+
+        if (args.size() > 1)
+        {
+            if (args[1] == "-r")
+            {
+                histFile = args[3];
+                read_history(histFile.c_str());
+                //std::cout<<histFile<<std::endl;
+                return;
+            }
+            else
+            {
+                start = history_length - stoi(args[1]);
+            }
+        }
+        //std::cout << histFile << std::endl;
         for (int i = start; i < history_length; i++)
         {
             HIST_ENTRY *entry = history_get(history_base + i);
-            
+
             if (entry)
             {
                 std::cout << (history_base + i) << " " << entry->line << "\n";
@@ -351,7 +368,7 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
 
             if (i < numCmds - 1)
                 dup2(pipefd[1], STDOUT_FILENO);
-            
+
             // Close pipe ends not used by this child
             if (i < numCmds - 1)
             {
@@ -368,12 +385,13 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
                 if (arg == " ")
                     continue;
                 argv.push_back(const_cast<char *>(arg.c_str()));
-                cleanArgs.push_back(arg);       // <--- POPULATE CLEAN ARGS
+                cleanArgs.push_back(arg); // <--- POPULATE CLEAN ARGS
             }
             argv.push_back(nullptr);
 
             // Safety check for empty commands (e.g. multiple spaces)
-            if (argv.empty() || argv[0] == nullptr) {
+            if (argv.empty() || argv[0] == nullptr)
+            {
                 exit(0);
             }
 
@@ -395,9 +413,9 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
 
         // --- PARENT ---
         pids.push_back(pid);
-        
+
         // Close the read end of the previous pipe (if valid)
-        if (in_fd != 0) 
+        if (in_fd != 0)
             close(in_fd);
 
         if (i < numCmds - 1)
