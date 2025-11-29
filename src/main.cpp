@@ -224,10 +224,13 @@ void run_builtin(std::vector<std::string> args)
         {
             if (args[1] == "-r")
             {
-                histFile = args[3];
-                read_history(histFile.c_str());
+                //histFile = args[3];
+                read_history(args[3].c_str());
                 //std::cout<<histFile<<std::endl;
                 return;
+            }
+            else if(args[1] == "-w"){
+                write_history(args[3].c_str());
             }
             else
             {
