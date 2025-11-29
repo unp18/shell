@@ -19,7 +19,7 @@ bool appOut = false;
 bool appError = false;
 bool isPiped = false;
 std::string loc, locE;
-std::vector<std::string> vocabulary{"type", "echo", "exit", "pwd", "cd"};
+std::vector<std::string> vocabulary{"type", "echo", "exit", "pwd", "cd", "history"};
 std::vector<std::string> getArgs(const std::string &input)
 {
     std::vector<std::string> args;
