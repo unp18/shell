@@ -337,6 +337,8 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
 
             if (i < numCmds - 1)
                 dup2(pipefd[1], STDOUT_FILENO);
+            fflush(stdout);
+            fflush(stderr);
 
             // Close pipe ends not used by this child
             if (i < numCmds - 1)
@@ -455,6 +457,7 @@ char **command_completion(const char *text, int start, int end)
 
 int main(int argc, char **argv)
 {
+    std::ios::sync_with_stdio(false);
     if (argc > 1 && std::string(argv[1]) == "-d")
     {
         rl_bind_key('\t', rl_insert);
