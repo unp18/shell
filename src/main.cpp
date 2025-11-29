@@ -214,6 +214,18 @@ void run_builtin(std::vector<std::string> args)
             std::cout << "cd: " << input.substr(2) << ": No such file or directory" << std::endl;
         }
     }
+    else if (args[0] == "history")
+    {
+        for (int i = 0; i < history_length; i++)
+        {
+            HIST_ENTRY *entry = history_get(history_base + i);
+            
+            if (entry)
+            {
+                std::cout << (history_base + i) << " " << entry->line << "\n";
+            }
+        }
+    }
 }
 void external(const std::vector<std::string> &args)
 {
