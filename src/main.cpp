@@ -216,7 +216,9 @@ void run_builtin(std::vector<std::string> args)
     }
     else if (args[0] == "history")
     {
-        for (int i = 0; i < history_length; i++)
+        int start = 0;
+        if(args.size() > 1) start = history_length - stoi(args[1]);
+        for (int i = start; i < history_length; i++)
         {
             HIST_ENTRY *entry = history_get(history_base + i);
             
