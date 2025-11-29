@@ -49,6 +49,7 @@ std::vector<std::string> getArgs(const std::string &input)
                 {
                     tmp += '\\'; // keep the backslash
                 }
+                //      tmp += input[++i]; // Add escaped char
             }
             else
                 tmp += '\\';
@@ -120,10 +121,12 @@ std::vector<std::string> getArgs(const std::string &input)
 
 bool isBuiltin(const std::string &cmd)
 {
+    // std::vector<std::string> commands = {"type", "echo", "exit", "pwd", "cd"};
     for (auto command : vocabulary)
     {
         if (command == cmd)
         {
+
             return true;
         }
     }
@@ -175,12 +178,12 @@ void type(const std::string &cmd)
 }
 void run_builtin(std::vector<std::string> args)
 {
-    if (args.empty()) return;
     if (args[0] == "echo")
     {
-        for (int i = 1; i < args.size() && args[i] != " "; i++)
+        for (int i = 1; i < args.size(); i++)
         {
             std::cout << args[i];
+            // printf("%s",args[i]);
         }
         std::cout << "\n";
     }
@@ -201,22 +204,27 @@ void run_builtin(std::vector<std::string> args)
         std::string input;
         for (auto x : args)
             input += x;
-        const std::string newDirectory = input.substr(3);
+        const std::string newDirectory = input.substr(2);
         if (newDirectory == "~")
         {
             chdir(getenv("HOME"));
         }
         else if (chdir(newDirectory.c_str()) != 0)
         {
-            std::cout << "cd: " << input.substr(3) << ": No such file or directory" << std::endl;
+            std::cout << "cd: " << input.substr(2) << ": No such file or directory" << std::endl;
         }
     }
 }
 void external(const std::vector<std::string> &args)
 {
-    if (args.empty()) return;
+    // 1. Parse the input string into command and arguments
+    if (args.empty())
+    {
+        return; // No command entered
+    }
     const std::string &cmd = args[0];
 
+    // 2. Find the full path of the command
     const char *pathEnv = std::getenv("PATH");
     if (!pathEnv)
     {
@@ -249,15 +257,19 @@ void external(const std::vector<std::string> &args)
         return;
     }
 
+    // 3. Fork and execute the command
     pid_t pid = fork();
 
     if (pid == -1)
     {
+        // Fork failed
         perror("fork");
         return;
     }
     else if (pid == 0)
     {
+        // --- Child Process ---
+        // Prepare arguments for execv (needs a char* array ending in NULL)
         if (!loc.empty())
         {
             int flags = O_WRONLY | O_CREAT | (appOut ? O_APPEND : O_TRUNC);
@@ -289,19 +301,23 @@ void external(const std::vector<std::string> &args)
                 continue;
             argv.push_back(const_cast<char *>(arg.c_str()));
         }
-        argv.push_back(nullptr);
+        argv.push_back(nullptr); // Null-terminate the array
 
+        // Execute the command. execv replaces the child process.
         execv(fullPath.c_str(), argv.data());
+
+        // If execv returns, it's always an error.
         perror("execv");
         exit(EXIT_FAILURE);
     }
     else
     {
+        // --- Parent Process ---
         int status;
+        // Wait for the child process to terminate
         waitpid(pid, &status, 0);
     }
 }
-
 void executePipeline(std::vector<std::vector<std::string>> &pipelines)
 {
     int numCmds = pipelines.size();
@@ -312,101 +328,75 @@ void executePipeline(std::vector<std::vector<std::string>> &pipelines)
     for (int i = 0; i < numCmds; i++)
     {
         if (i < numCmds - 1)
-        {
-            if (pipe(pipefd) < 0)
-            {
-                perror("pipe");
-                return;
-            }
-        }
+            pipe(pipefd);
 
         pid_t pid = fork();
-        if (pid == -1)
+        if (pid == 0) // --- CHILD ---
         {
-            perror("fork");
-            // cleanup any open fds
-            if (i < numCmds - 1)
-            {
-                close(pipefd[0]);
-                close(pipefd[1]);
-            }
-            // wait for already-started children
-            for (pid_t p : pids) waitpid(p, nullptr, 0);
-            return;
-        }
-        else if (pid == 0) // --- CHILD ---
-        {
-            // Redirect stdin from previous in_fd
-            if (dup2(in_fd, STDIN_FILENO) < 0) { perror("dup2"); exit(1); }
+            dup2(in_fd, STDIN_FILENO);
 
-            // If not last command, redirect stdout to pipe write end
             if (i < numCmds - 1)
-            {
-                if (dup2(pipefd[1], STDOUT_FILENO) < 0) { perror("dup2"); exit(1); }
-            }
-
-            // Close unused fds in child
+                dup2(pipefd[1], STDOUT_FILENO);
+            
+            // Close pipe ends not used by this child
             if (i < numCmds - 1)
             {
                 close(pipefd[0]);
                 close(pipefd[1]);
             }
 
-            // Rebind C++ streams to the child's current stdout/stderr so builtins that use std::cout work correctly
-            // Use /dev/fd/1 and /dev/fd/2 which refer to the current process' stdout/stderr
-            std::ofstream out("/dev/fd/1");
-            std::ofstream err("/dev/fd/2");
-            if (out) std::cout.rdbuf(out.rdbuf());
-            if (err) std::cerr.rdbuf(err.rdbuf());
-
-            // Convert vector<string> → char*[]
+            // Convert vector<string> -> char*[] AND create clean args for builtins
             std::vector<char *> argv;
+            std::vector<std::string> cleanArgs; // <--- NEW VECTOR
+
             for (auto &arg : pipelines[i])
             {
                 if (arg == " ")
                     continue;
                 argv.push_back(const_cast<char *>(arg.c_str()));
+                cleanArgs.push_back(arg);       // <--- POPULATE CLEAN ARGS
             }
             argv.push_back(nullptr);
 
-            if (!argv.empty() && isBuiltin(argv[0]))
+            // Safety check for empty commands (e.g. multiple spaces)
+            if (argv.empty() || argv[0] == nullptr) {
+                exit(0);
+            }
+
+            if (isBuiltin(argv[0]))
             {
-                // Run builtin in child (it will write via std::cout -> pipe)
-                run_builtin(pipelines[i]);
+                std::cout.flush();
+                std::cerr.flush();
+                std::ios::sync_with_stdio(false);
+                run_builtin(cleanArgs); // <--- PASS cleanArgs INSTEAD OF pipelines[i]
                 exit(0);
             }
             else
             {
-                // Exec external command
-                if (!argv.empty())
-                {
-                    execvp(argv[0], argv.data());
-                    perror("execvp");
-                }
+                execvp(argv[0], argv.data());
+                perror("execvp");
                 exit(1);
             }
         }
 
         // --- PARENT ---
         pids.push_back(pid);
+        
+        // Close the read end of the previous pipe (if valid)
+        if (in_fd != 0) 
+            close(in_fd);
 
         if (i < numCmds - 1)
         {
             close(pipefd[1]);  // parent doesn't write
-            // parent will use read end as next input
-            if (in_fd != 0) close(in_fd); // close previous read end in parent
             in_fd = pipefd[0]; // next child reads from here
         }
     }
 
-    // Wait for all children
+    // Wait only AFTER all processes are forked
     for (pid_t pid : pids)
         waitpid(pid, nullptr, 0);
-
-    // Close any leftover fd in parent
-    if (in_fd != 0) close(in_fd);
 }
-
 char *command_generator(const char *text, int state)
 {
     static std::vector<std::string> matches;
@@ -478,6 +468,7 @@ char **command_completion(const char *text, int start, int end)
 
 int main(int argc, char **argv)
 {
+    std::ios::sync_with_stdio(false);
     if (argc > 1 && std::string(argv[1]) == "-d")
     {
         rl_bind_key('\t', rl_insert);
@@ -487,19 +478,22 @@ int main(int argc, char **argv)
     std::cerr << std::unitbuf;
     rl_attempted_completion_function = command_completion;
 
+    // Uncomment this block to pass the first stage
     char *buf;
     std::string input;
 
     while ((buf = readline("$ ")) != nullptr)
     {
+        // std::cout << "$ ";
         input = std::string(buf);
         if (input.size() > 0)
         {
             add_history(buf);
         }
         free(buf);
-
-        if (input == "exit 0")
+        // std::string input;
+        // std::getline(std::cin, input);
+        if (input == "exit")
         {
             return 0;
         }
@@ -612,5 +606,6 @@ int main(int argc, char **argv)
             std::cerr.rdbuf(original_cerr);
             fileError.close();
         }
+        // loc = "";
     }
 }
