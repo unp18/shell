@@ -560,6 +560,7 @@ int main(int argc, char **argv)
         // std::getline(std::cin, input);
         if (input == "exit")
         {
+            write_history(histFile.c_str());
             return 0;
         }
         std::vector<std::string> args = getArgs(input);
