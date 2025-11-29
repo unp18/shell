@@ -19,6 +19,7 @@ bool appOut = false;
 bool appError = false;
 bool isPiped = false;
 std::string histFile = "";
+int session_start=0;
 std::string loc, locE;
 std::vector<std::string> vocabulary{"type", "echo", "exit", "pwd", "cd", "history"};
 std::vector<std::string> getArgs(const std::string &input)
@@ -177,6 +178,23 @@ void type(const std::string &cmd)
         std::cout << cmd << ": not found" << std::endl;
     }
 }
+void append_history(const std::string &filename, int start_index)
+{
+    std::ofstream file(filename, std::ios::app);
+    if (!file.is_open()) return;
+
+    // Iterate from where we started this session up to the current end
+    for (int i = start_index; i < history_length; i++)
+    {
+        // history_base + i gives the correct logical index
+        HIST_ENTRY *entry = history_get(history_base + i);
+        if (entry)
+        {
+            file << entry->line << "\n";
+        }
+    }
+    session_start = history_length;
+}
 void run_builtin(std::vector<std::string> args)
 {
     if (args[0] == "echo")
@@ -229,8 +247,12 @@ void run_builtin(std::vector<std::string> args)
                 //std::cout<<histFile<<std::endl;
                 return;
             }
-            else if(args[1] == "-w"){
+            else if(args[1] == "-w" ){
                 write_history(args[3].c_str());
+                return;
+            }
+            else if(args[1] == "-a" ){
+                append_history(args[3],session_start);
                 return;
             }
             else
@@ -517,7 +539,7 @@ int main(int argc, char **argv)
     // Uncomment this block to pass the first stage
     char *buf;
     std::string input;
-
+    session_start = history_length;
     while ((buf = readline("$ ")) != nullptr)
     {
         // std::cout << "$ ";
@@ -525,6 +547,7 @@ int main(int argc, char **argv)
         if (input.size() > 0)
         {
             add_history(buf);
+            //session_start++;
         }
         free(buf);
         // std::string input;
@@ -642,6 +665,7 @@ int main(int argc, char **argv)
             std::cerr.rdbuf(original_cerr);
             fileError.close();
         }
+        //session_start++;
         // loc = "";
     }
 }
