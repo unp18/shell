@@ -536,7 +536,13 @@ int main(int argc, char **argv)
     std::cerr << std::unitbuf;
     rl_attempted_completion_function = command_completion;
 
-    // Uncomment this block to pass the first stage
+    
+    const char *envHist = std::getenv("HISTFILE");
+    if (envHist && std::strlen(envHist) > 0)
+    {
+        histFile = std::string(envHist);
+        read_history(histFile.c_str());
+    }
     char *buf;
     std::string input;
     session_start = history_length;
